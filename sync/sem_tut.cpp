@@ -16,7 +16,7 @@ int total_goods_produced_by_producer;
 int use = 0;
 int fill = 0;
 
-sem_t empty;
+sem_t empty1;
 sem_t full;
 sem_t mutex;
 #define CMAX (10)
@@ -43,7 +43,7 @@ void *producer(void *arg)
     int i;
     for (i = 0; i < total_goods_produced_by_producer; i++)
     {
-        sem_wait(&empty);
+        sem_wait(&empty1);
         sem_wait(&mutex);
         do_fill(i);
         sem_post(&mutex);
@@ -53,13 +53,12 @@ void *producer(void *arg)
     // end case
     for (i = 0; i < consumers; i++)
     {
-        sem_wait(&empty);
+        sem_wait(&empty1);
         sem_wait(&mutex);
         do_fill(-1);
         sem_post(&mutex);
         sem_post(&full);
     }
-
     return NULL;
 }
 
@@ -71,10 +70,10 @@ void *consumer(void *arg)
         sem_wait(&full);
         sem_wait(&mutex);
         tmp = do_get();
-        //you can check that q.size() will never exceed CAPACITY
-        // printf("Queue size is %d\n", (int)q.size());
+        // you can check that q.size() will never exceed CAPACITY
+        //  printf("Queue size is %d\n", (int)q.size());
         sem_post(&mutex);
-        sem_post(&empty);
+        sem_post(&empty1);
         if (tmp == -1)
         {
             break;
@@ -84,54 +83,6 @@ void *consumer(void *arg)
     return NULL;
 }
 #endif
-////////////////  INCORRECT SOLN //////////////////////
-#ifndef CORRECT
-
-//Code expected to hang due to deadlock
-void *producer(void *arg)
-{
-    int i;
-    cout << "Producer is now active" << endl;
-    for (i = 0; i < total_goods_produced_by_producer; i++)
-    {
-        sem_wait(&mutex);
-        sem_wait(&empty);
-        do_fill(i);
-        sem_post(&full);
-        sem_post(&mutex);
-    }
-
-    // end case
-    for (i = 0; i < consumers; i++)
-    {
-        sem_wait(&mutex);
-        sem_wait(&empty);
-        do_fill(-1);
-        sem_post(&full);
-        sem_post(&mutex);
-    }
-
-    return NULL;
-}
-
-void *consumer(void *arg)
-{
-    int tmp = 0;
-    while (tmp != -1)
-    {
-        sem_wait(&mutex);
-        sem_wait(&full);
-        tmp = do_get();
-        debug(q.size());
-        sem_post(&empty);
-        sem_post(&mutex);
-        printf("Consumer %lld fetched item %d\n", (long long int)arg, tmp);
-    }
-    return NULL;
-}
-
-#endif
-//////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
@@ -143,9 +94,9 @@ int main(int argc, char *argv[])
     consumers = 3;
     assert(consumers <= CMAX);
 
-    sem_init(&empty, 0, CAPACITY); // CAPACITY are empty
-    sem_init(&full, 0, 0);         // 0 are full
-    sem_init(&mutex, 0, 1);        // mutex
+    sem_init(&empty1, 0, CAPACITY); // CAPACITY are empty1
+    sem_init(&full, 0, 0);          // 0 are full
+    sem_init(&mutex, 0, 1);         // mutex
 
     pthread_t pid, cid[CMAX];
 
